@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: friday
+      time: "20:00"
+      timezone: "Etc/UTC"
+    groups:
+      # Action version bumps are almost always safe; group everything,
+      # including majors, since CI itself catches breakage.
+      actions:
+        patterns:
+          - "*"
+
+  # Base-image bumps for image/Dockerfile (the atreoAGENT image the add-on
+  # layers on). patterns:["*"] groups all bumps, majors included.
+  - package-ecosystem: docker
+    directory: "/image"
+    schedule:
+      interval: weekly
+      day: friday
+      time: "20:00"
+      timezone: "Etc/UTC"
+    groups:
+      docker:
+        patterns:
+          - "*"

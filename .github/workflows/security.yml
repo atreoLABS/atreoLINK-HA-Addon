@@ -1,0 +1,118 @@
+name: Security
+
+# Secret + supply-chain scanning. Runs on every PR and weekly (so newly-disclosed
+# CVEs in unchanged code still surface), and is called by build.yaml so a publish
+# is gated on these scans. Findings print to the run log; a real problem fails the
+# job. This repo has no GitHub Advanced Security, so nothing uploads SARIF.
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 1 * * 0" # Sundays 01:00 UTC — catches newly-disclosed CVEs
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history — secrets are often committed then "removed"
+
+      # Run the gitleaks CLI directly (pinned) rather than the action, which needs
+      # a paid licence for org-owned private repos. Gate: --exit-code 1 fails on
+      # any finding; allowlist lives in .gitleaks.toml.
+      - name: Run gitleaks
+        env:
+          GITLEAKS_VERSION: 8.30.1
+        run: |
+          set -euo pipefail
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks git . --redact --verbose --config .gitleaks.toml --exit-code 1
+
+  dockerfile-config:
+    name: Trivy Dockerfile config (informational)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Static misconfig scan of the Dockerfile — no build needed. Informational
+      # only: the image runs as root by design (the agent needs NET_ADMIN for
+      # wg/ip/iptables), so this never fails the build.
+      - name: Scan Dockerfile
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: image/Dockerfile
+          format: table
+          output: trivy-config.txt
+          exit-code: "0"
+
+      - name: Publish to step summary
+        if: always()
+        run: |
+          {
+            echo "## Trivy Dockerfile config scan (informational)"
+            echo
+            echo "Misconfiguration findings for the add-on image's Dockerfile."
+            echo "These do **not** block the build — the image runs as root by"
+            echo "design (the agent needs NET_ADMIN for wg/ip/iptables)."
+            echo
+            if [ -s trivy-config.txt ]; then
+              echo '```'
+              cat trivy-config.txt
+              echo '```'
+            else
+              echo "_No misconfigurations reported._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  image-scan:
+    name: Trivy image scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read # pull the atreoAGENT base image if it is private
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR (for the atreoAGENT base image)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the add-on image (amd64, into the local daemon) and scan it, so
+      # base-image CVEs surface on the PR rather than only at publish. Gate: fail
+      # on HIGH/CRITICAL that have a fix available (ignore-unfixed drops noise we
+      # can't action — bump the base image in image/Dockerfile to clear real hits).
+      - name: Build image (amd64, local)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: image/Dockerfile
+          load: true
+          platforms: linux/amd64
+          tags: addon-scan:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: addon-scan:latest
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db

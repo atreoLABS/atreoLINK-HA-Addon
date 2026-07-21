@@ -1,0 +1,55 @@
+{
+  "config": {
+    "step": {
+      "hassio_confirm": {
+        "title": "atreoLINK",
+        "description": "Set up the atreoLINK integration to send notifications to your family members from Home Assistant?"
+      },
+      "user": {
+        "title": "atreoLINK",
+        "description": "Enter the address of your atreoLINK agent and its notification API key. The key is printed in the add-on Log tab.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "api_key": "API key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the atreoLINK agent at that address.",
+      "invalid_auth": "The API key was rejected by the agent.",
+      "unsupported_agent": "This agent is too old to list members. Update the atreoLINK add-on and try again."
+    },
+    "abort": {
+      "already_configured": "atreoLINK is already configured."
+    }
+  },
+  "services": {
+    "send_notification": {
+      "name": "Send notification",
+      "description": "Sends an end-to-end-encrypted notification to one or more atreoLINK family members.",
+      "fields": {
+        "target": {
+          "name": "Recipients",
+          "description": "Email addresses of the family members to notify."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Notification title, shown on the lock screen."
+        },
+        "message": {
+          "name": "Message",
+          "description": "Notification body."
+        },
+        "severity": {
+          "name": "Severity",
+          "description": "Severity hint for the recipient's device."
+        },
+        "html": {
+          "name": "HTML body",
+          "description": "Optional rich HTML body shown when the notification is opened."
+        }
+      }
+    }
+  }
+}

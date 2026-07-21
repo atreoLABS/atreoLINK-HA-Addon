@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v5
+
+      # ruff is pinned so a new release can't turn CI red out from under an
+      # unrelated PR; Dependabot has no uv/ruff ecosystem here, so bump the pin
+      # manually (or in the same PR that adopts a new rule).
+      - name: ruff check
+        run: uvx ruff@0.15.21 check .
+
+      - name: ruff format
+        run: uvx ruff@0.15.21 format --check .
+
+  test:
+    name: Test (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v5
+
+      # api.py has no Home Assistant dependency, so the suite runs against a
+      # throwaway venv (aiohttp + pytest) without pulling in homeassistant.
+      - name: pytest
+        run: >-
+          uv run --python 3.13 --with aiohttp --with pytest
+          --with pytest-asyncio --no-project pytest tests
+
+  hassfest:
+    name: Hassfest (integration manifest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Home Assistant's own manifest/structure validator for the bundled
+      # custom_components/atreolink integration.
+      - uses: home-assistant/actions/hassfest@master
+
+  addon-lint:
+    name: Add-on lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Validates atreoagent/config.yaml against the add-on schema.
+      - uses: frenck/action-addon-linter@v2
+        with:
+          path: "./atreoagent"

@@ -1,0 +1,87 @@
+name: atreoLINK
+version: "0.1.0"
+slug: atreoagent
+description: Self-hosted atreoLINK agent — WireGuard tunnel, ACL reverse proxy, encrypted push + SMTP gateway.
+url: https://github.com/atreoLABS/atreoLINK-HA-Addon
+# Pulled tag must match `version`. Multi-arch manifest, so no `{arch}` needed.
+image: "ghcr.io/atreolabs/atreolink-ha-addon"
+arch:
+  - aarch64
+  - amd64
+# startup/boot/init omitted — each would only restate its default, which the
+# add-on linter rejects. The init default still matters: the agent base image
+# ships no init, so the Supervisor's tini reaps zombies and forwards SIGTERM.
+# Never set `init: false` here.
+host_network: true
+privileged:
+  - NET_ADMIN
+devices:
+  - /dev/net/tun
+# Lets run.sh raise/dismiss the pairing notification via the Supervisor proxy.
+homeassistant_api: true
+# Lets run.sh publish the notify API key to the integration via Supervisor discovery.
+hassio_api: true
+# Mount the HA config dir (at /homeassistant) so run.sh can install the bundled
+# custom_components/atreolink integration.
+map:
+  - homeassistant_config:rw
+# Hands the notify host/port/api_key to the bundled integration's config flow.
+discovery:
+  - atreolink
+ports:
+  51820/udp: 51820
+  80/tcp: 80
+  443/tcp: 443
+  9091/tcp: 9091
+  9876/tcp: 9876
+  2525/tcp: 2525
+ports_description:
+  51820/udp: WireGuard tunnel (forward this on your router if UPnP is off)
+  80/tcp: Built-in reverse proxy (HTTP / ACME challenges)
+  443/tcp: Built-in reverse proxy (HTTPS)
+  9091/tcp: Forward-auth endpoint for external reverse proxies
+  9876/tcp: Local notification API
+  2525/tcp: SMTP-to-push gateway (only when enabled)
+
+options:
+  log_level: info
+  wireguard_listen_port: 51820
+  wireguard_firewall_enabled: true
+  wireguard_upnp_enabled: true
+  proxy_enabled: true
+  proxy_http_port: 80
+  proxy_https_port: 443
+  proxy_auth_port: 9091
+  proxy_trusted_networks: []
+  proxy_trusted_proxies: []
+  ha_trust_proxy: true
+  notify_port: 9876
+  smtp_enabled: false
+  smtp_listen: "0.0.0.0:2525"
+  smtp_max_message_bytes: 1048576
+  smtp_rate_per_minute: 5
+  smtp_tls_enabled: false
+
+schema:
+  log_level: list(debug|info|warn|error)
+  wireguard_listen_port: port
+  wireguard_firewall_enabled: bool
+  wireguard_upnp_enabled: bool
+  endpoint_ip: str?
+  endpoint_port: port?
+  proxy_enabled: bool
+  proxy_http_port: port
+  proxy_https_port: port
+  proxy_auth_port: port
+  proxy_trusted_networks:
+    - str
+  proxy_trusted_proxies:
+    - str
+  ha_trust_proxy: bool
+  certs_email: email?
+  notify_port: port
+  smtp_enabled: bool
+  smtp_listen: str
+  smtp_max_message_bytes: int(1024,)
+  smtp_rate_per_minute: int(1,)
+  smtp_tls_enabled: bool

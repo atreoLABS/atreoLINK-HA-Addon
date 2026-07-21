@@ -1,0 +1,32 @@
+send_notification:
+  fields:
+    target:
+      required: true
+      example: "alice@example.com"
+      selector:
+        text:
+          multiple: true
+    title:
+      required: true
+      example: "Backup finished"
+      selector:
+        text:
+    message:
+      required: true
+      example: "The nightly backup completed successfully."
+      selector:
+        text:
+          multiline: true
+    severity:
+      default: info
+      selector:
+        select:
+          options:
+            - info
+            - warning
+            - error
+    html:
+      required: false
+      selector:
+        text:
+          multiline: true

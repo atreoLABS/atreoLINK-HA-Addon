@@ -1,0 +1,5 @@
+# gitleaks config. Extends the upstream default ruleset. No project-specific
+# allowlists yet — add narrow, well-documented entries here if a real false
+# positive appears rather than disabling rules wholesale.
+[extend]
+useDefault = true

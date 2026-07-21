@@ -1,0 +1,13 @@
+# Keep the Docker build context small — the image only bundles
+# custom_components/ and image/run.sh (see image/Dockerfile). Everything here is
+# dev/CI tooling that never needs to reach the daemon.
+.git
+.github
+tests
+pyproject.toml
+.gitleaks.toml
+.gitignore
+.dockerignore
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache

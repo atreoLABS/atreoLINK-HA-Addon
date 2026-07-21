@@ -1,0 +1,5 @@
+# Add-on repository metadata. Add this repo's URL under
+# Settings -> Add-ons -> Add-on Store -> (top-right menu) -> Repositories.
+name: atreoLINK Add-ons
+url: https://github.com/atreoLABS/atreoLINK-HA-Addon
+maintainer: atreoLABS <support@atreolabs.com>

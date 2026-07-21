@@ -1,0 +1,16 @@
+# Tooling config for the bundled atreoLINK Home Assistant integration and its
+# tests. This is not a packaging manifest: Home Assistant loads
+# custom_components/atreolink directly and the add-on image installs it via
+# image/run.sh. It only configures ruff (lint + format) and pytest, which CI
+# drives through uv/uvx.
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "ASYNC"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
