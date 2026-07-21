@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
       # ruff is pinned so a new release can't turn CI red out from under an
       # unrelated PR; Dependabot has no uv/ruff ecosystem here, so bump the pin
@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
       # api.py has no Home Assistant dependency, so the suite runs against a
       # throwaway venv (aiohttp + pytest) without pulling in homeassistant.
