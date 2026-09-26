@@ -1,5 +1,5 @@
 name: atreoLINK
-version: "0.1.0"
+version: "0.2.0"
 slug: atreoagent
 description: Self-hosted atreoLINK agent — WireGuard tunnel, ACL reverse proxy, encrypted push + SMTP gateway.
 url: https://github.com/atreoLABS/atreoLINK-HA-Addon
